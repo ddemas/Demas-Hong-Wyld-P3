@@ -13,7 +13,7 @@ from kivy.uix.image import Image
 from kivy.uix.slider import Slider
 from kivy.graphics import *
 
-from kivy.config import Config
+from generate_voronoi_image import *
 
 class InputImageFile(BoxLayout):
 
@@ -54,11 +54,26 @@ class InputImageFile(BoxLayout):
         self.padding = [5,5]
         self.spacing = 10
 
-        self.image = Image(source=file_name)
+        self.fp = file_name
+
+        self.image = kivy.uix.image.Image(source=file_name)
         self.add_widget(self.image)
         self.image.bind(on_touch_down=self.add_point)
 
         self.slider_widget = SlidersAndOptions()
+
+        self.message = Label(text="Place points of interest by clicking on your image.", height=30, size_hint=(1, None))
+        self.euclid_metric = Button(text="Show Voronoi with Euclidean metric", height=30, size_hint=(0.5, None))
+        self.euclid_metric.bind(on_press=self.euclid_generate)
+        self.inf_metric = Button(text="Show Voronoi with L infinity metric", height=30, size_hint=(0.5, None))
+        self.inf_metric.bind(on_press=self.inf_generate)
+        self.manhattan_metric = Button(text="Show Voronoi with Manhattan metric", height=30, size_hint=(0.5, None))
+        self.manhattan_metric.bind(on_press=self.manhattan_generate)
+
+        self.slider_widget.add_widget(self.message)
+        self.slider_widget.add_widget(self.euclid_metric)
+        self.slider_widget.add_widget(self.inf_metric)
+        self.slider_widget.add_widget(self.manhattan_metric)
 
         self.clear_points_button = Button(text="Clear points", height=30, size_hint=(0.5, None))
         self.clear_points_button.bind(on_press=self.clear_points)
@@ -90,6 +105,37 @@ class InputImageFile(BoxLayout):
         self.weight_sliders = []
         self.weight_labels = []
 
+    def euclid_generate(self, instance):
+        print(self.points_and_weights)
+        self.output_fname = generate_voronoi_diagram(self.fp, GenerateInput([pw[0] for pw in self.points_and_weights],
+                                                        [slider.value for slider in self.weight_sliders],
+                                                        euclidean_metric,
+                                                        self.image.norm_image_size,
+                                                        self.image.width,
+                                                        self.image.height))
+        self.image.source = self.output_fname
+        self.image.reload()
+
+    def manhattan_generate(self, instance):
+        self.output_fname = generate_voronoi_diagram(self.fp, GenerateInput([pw[0] for pw in self.points_and_weights],
+                                                        [slider.value for slider in self.weight_sliders],
+                                                        manhattan_metric,
+                                                        self.image.norm_image_size,
+                                                        self.image.width,
+                                                        self.image.height))
+        self.image.source = self.output_fname
+        self.image.reload()
+
+    def inf_generate(self, instance):
+        self.output_fname = generate_voronoi_diagram(self.fp, GenerateInput([pw[0] for pw in self.points_and_weights],
+                                                        [slider.value for slider in self.weight_sliders],
+                                                        inf_metric,
+                                                        self.image.norm_image_size,
+                                                        self.image.width,
+                                                        self.image.height))
+        self.image.source = self.output_fname
+        self.image.reload()
+
 class SlidersAndOptions(StackLayout):
 
 
@@ -97,15 +143,6 @@ class SlidersAndOptions(StackLayout):
         super(SlidersAndOptions, self).__init__(**kwargs)
         self.orientation = 'lr-tb'
 
-        self.message = Label(text="Place points of interest by clicking on your image.", height=30, size_hint=(1, None))
-        self.euclid_metric = Button(text="Show Voronoi with Euclidean metric", height=30, size_hint=(0.5, None))
-        self.inf_metric = Button(text="Show Voronoi with L infinity metric", height=30, size_hint=(0.5, None))
-        self.manhattan_metric = Button(text="Show Voronoi with Manhattan metric", height=30, size_hint=(0.5, None))
-
-        self.add_widget(self.message)
-        self.add_widget(self.euclid_metric)
-        self.add_widget(self.inf_metric)
-        self.add_widget(self.manhattan_metric)
 
 class MyApp(App):
 

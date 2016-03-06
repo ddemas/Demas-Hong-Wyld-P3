@@ -197,6 +197,8 @@ def flip(edge, lines, quad):
     sorted_adjacent_points = sorted(in_circle_adjacent, key=lambda point: dist_to_line_from_point(edge, point), reverse=True)
 
     if len(sorted_adjacent_points) >= 2:
+        good_point = sorted_adjacent_points[0]
+        [p for p in common_adjacent_points if in_circle(p, circumcircle(good_point, edge.point1, edge.point2))]
         return Line(sorted_adjacent_points[0], sorted_adjacent_points[1])
     else:
         print("something went wrong")
